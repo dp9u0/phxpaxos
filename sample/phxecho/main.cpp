@@ -31,7 +31,7 @@ using namespace phxecho;
 using namespace phxpaxos;
 using namespace std;
 
-int parse_ipport(const char * pcStr, NodeInfo & oNodeInfo)
+int parse_ipport(const char *pcStr, NodeInfo &oNodeInfo)
 {
     char sIP[32] = {0};
     int iPort = -1;
@@ -47,7 +47,7 @@ int parse_ipport(const char * pcStr, NodeInfo & oNodeInfo)
     return 0;
 }
 
-int parse_ipport_list(const char * pcStr, NodeInfoList & vecNodeInfoList)
+int parse_ipport_list(const char *pcStr, NodeInfoList &vecNodeInfoList)
 {
     string sTmpStr;
     int iStrLen = strlen(pcStr);
@@ -60,7 +60,7 @@ int parse_ipport_list(const char * pcStr, NodeInfoList & vecNodeInfoList)
             {
                 sTmpStr += pcStr[i];
             }
-            
+
             NodeInfo oNodeInfo;
             int ret = parse_ipport(sTmpStr.c_str(), oNodeInfo);
             if (ret != 0)
@@ -81,7 +81,7 @@ int parse_ipport_list(const char * pcStr, NodeInfoList & vecNodeInfoList)
     return 0;
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
     if (argc < 3)
     {
@@ -131,4 +131,3 @@ int main(int argc, char ** argv)
 
     return 0;
 }
-

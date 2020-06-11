@@ -1,0 +1,5 @@
+*.a
+*.o
+sample/*/*log*
+third_party/*
+third_party/**

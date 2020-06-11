@@ -30,172 +30,171 @@ using namespace std;
 namespace phxkv
 {
 
-PhxKVSM :: PhxKVSM(const std::string & sDBPath)
-    : m_llCheckpointInstanceID(phxpaxos::NoCheckpoint), m_iSkipSyncCheckpointTimes(0)
-{
-    m_sDBPath = sDBPath;
-}
-
-PhxKVSM :: ~PhxKVSM()
-{
-}
-
-const bool PhxKVSM :: Init()
-{
-    bool bSucc = m_oKVClient.Init(m_sDBPath);
-    if (!bSucc)
+    PhxKVSM ::PhxKVSM(const std::string &sDBPath)
+        : m_llCheckpointInstanceID(phxpaxos::NoCheckpoint), m_iSkipSyncCheckpointTimes(0)
     {
-        PLErr("KVClient.Init fail, dbpath %s", m_sDBPath.c_str());
-        return false;
+        m_sDBPath = sDBPath;
     }
 
-    int ret = m_oKVClient.GetCheckpointInstanceID(m_llCheckpointInstanceID);
-    if (ret != 0 && ret != KVCLIENT_KEY_NOTEXIST)
+    PhxKVSM ::~PhxKVSM()
     {
-        PLErr("KVClient.GetCheckpointInstanceID fail, ret %d", ret);
-        return false;
     }
 
-    if (ret == KVCLIENT_KEY_NOTEXIST)
+    const bool PhxKVSM ::Init()
     {
-        PLImp("no checkpoint");
-        m_llCheckpointInstanceID = phxpaxos::NoCheckpoint;
-    }
-    else
-    {
-        PLImp("CheckpointInstanceID %lu", m_llCheckpointInstanceID);
+        bool bSucc = m_oKVClient.Init(m_sDBPath);
+        if (!bSucc)
+        {
+            PLErr("KVClient.Init fail, dbpath %s", m_sDBPath.c_str());
+            return false;
+        }
+
+        int ret = m_oKVClient.GetCheckpointInstanceID(m_llCheckpointInstanceID);
+        if (ret != 0 && ret != KVCLIENT_KEY_NOTEXIST)
+        {
+            PLErr("KVClient.GetCheckpointInstanceID fail, ret %d", ret);
+            return false;
+        }
+
+        if (ret == KVCLIENT_KEY_NOTEXIST)
+        {
+            PLImp("no checkpoint");
+            m_llCheckpointInstanceID = phxpaxos::NoCheckpoint;
+        }
+        else
+        {
+            PLImp("CheckpointInstanceID %lu", m_llCheckpointInstanceID);
+        }
+
+        return true;
     }
 
-    return true;
-}
-
-int PhxKVSM :: SyncCheckpointInstanceID(const uint64_t llInstanceID)
-{
-    if (m_iSkipSyncCheckpointTimes++ < 5)
+    int PhxKVSM ::SyncCheckpointInstanceID(const uint64_t llInstanceID)
     {
-        PLDebug("no need to sync checkpoint, skiptimes %d", m_iSkipSyncCheckpointTimes);
+        if (m_iSkipSyncCheckpointTimes++ < 5)
+        {
+            PLDebug("no need to sync checkpoint, skiptimes %d", m_iSkipSyncCheckpointTimes);
+            return 0;
+        }
+
+        int ret = m_oKVClient.SetCheckpointInstanceID(llInstanceID);
+        if (ret != 0)
+        {
+            PLErr("KVClient::SetCheckpointInstanceID fail, ret %d instanceid %lu", ret, llInstanceID);
+            return ret;
+        }
+
+        PLImp("ok, old checkpoint instanceid %lu new checkpoint instanceid %lu",
+              m_llCheckpointInstanceID, llInstanceID);
+
+        m_llCheckpointInstanceID = llInstanceID;
+        m_iSkipSyncCheckpointTimes = 0;
+
         return 0;
     }
 
-    int ret = m_oKVClient.SetCheckpointInstanceID(llInstanceID);
-    if (ret != 0)
+    bool PhxKVSM ::Execute(const int iGroupIdx, const uint64_t llInstanceID,
+                           const std::string &sPaxosValue, SMCtx *poSMCtx)
     {
-        PLErr("KVClient::SetCheckpointInstanceID fail, ret %d instanceid %lu", ret, llInstanceID);
-        return ret;
-    }
-
-    PLImp("ok, old checkpoint instanceid %lu new checkpoint instanceid %lu",
-            m_llCheckpointInstanceID, llInstanceID);
-
-    m_llCheckpointInstanceID = llInstanceID;
-    m_iSkipSyncCheckpointTimes = 0;
-
-    return 0;
-}
-
-bool PhxKVSM :: Execute(const int iGroupIdx, const uint64_t llInstanceID, 
-        const std::string & sPaxosValue, SMCtx * poSMCtx)
-{
-    KVOperator oKVOper;
-    bool bSucc = oKVOper.ParseFromArray(sPaxosValue.data(), sPaxosValue.size());
-    if (!bSucc)
-    {
-        PLErr("oKVOper data wrong");
-        //wrong oper data, just skip, so return true
-        return true;
-    }
-
-    int iExecuteRet = -1;
-    string sReadValue;
-    uint64_t llReadVersion;
-
-    if (oKVOper.operator_() == KVOperatorType_READ)
-    {
-        iExecuteRet = m_oKVClient.Get(oKVOper.key(), sReadValue, llReadVersion);
-    }
-    else if (oKVOper.operator_() == KVOperatorType_WRITE)
-    {
-        iExecuteRet = m_oKVClient.Set(oKVOper.key(), oKVOper.value(), oKVOper.version());
-    }
-    else if (oKVOper.operator_() == KVOperatorType_DELETE)
-    {
-        iExecuteRet = m_oKVClient.Del(oKVOper.key(), oKVOper.version());
-    }
-    else
-    {
-        PLErr("unknown op %u", oKVOper.operator_());
-        //wrong op, just skip, so return true;
-        return true;
-    }
-
-    if (iExecuteRet == KVCLIENT_SYS_FAIL)
-    {
-        //need retry
-        return false;
-    }
-    else
-    {
-        if (poSMCtx != nullptr && poSMCtx->m_pCtx != nullptr)
+        KVOperator oKVOper;
+        bool bSucc = oKVOper.ParseFromArray(sPaxosValue.data(), sPaxosValue.size());
+        if (!bSucc)
         {
-            PhxKVSMCtx * poPhxKVSMCtx = (PhxKVSMCtx *)poSMCtx->m_pCtx;
-            poPhxKVSMCtx->iExecuteRet = iExecuteRet;
-            poPhxKVSMCtx->sReadValue = sReadValue;
-            poPhxKVSMCtx->llReadVersion = llReadVersion;
+            PLErr("oKVOper data wrong");
+            //wrong oper data, just skip, so return true
+            return true;
         }
 
-        SyncCheckpointInstanceID(llInstanceID);
+        int iExecuteRet = -1;
+        string sReadValue;
+        uint64_t llReadVersion;
 
-        return true;
+        if (oKVOper.operator_() == KVOperatorType_READ)
+        {
+            iExecuteRet = m_oKVClient.Get(oKVOper.key(), sReadValue, llReadVersion);
+        }
+        else if (oKVOper.operator_() == KVOperatorType_WRITE)
+        {
+            iExecuteRet = m_oKVClient.Set(oKVOper.key(), oKVOper.value(), oKVOper.version());
+        }
+        else if (oKVOper.operator_() == KVOperatorType_DELETE)
+        {
+            iExecuteRet = m_oKVClient.Del(oKVOper.key(), oKVOper.version());
+        }
+        else
+        {
+            PLErr("unknown op %u", oKVOper.operator_());
+            //wrong op, just skip, so return true;
+            return true;
+        }
+
+        if (iExecuteRet == KVCLIENT_SYS_FAIL)
+        {
+            //need retry
+            return false;
+        }
+        else
+        {
+            if (poSMCtx != nullptr && poSMCtx->m_pCtx != nullptr)
+            {
+                PhxKVSMCtx *poPhxKVSMCtx = (PhxKVSMCtx *)poSMCtx->m_pCtx;
+                poPhxKVSMCtx->iExecuteRet = iExecuteRet;
+                poPhxKVSMCtx->sReadValue = sReadValue;
+                poPhxKVSMCtx->llReadVersion = llReadVersion;
+            }
+
+            SyncCheckpointInstanceID(llInstanceID);
+
+            return true;
+        }
     }
-}
 
-////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
 
-bool PhxKVSM :: MakeOpValue(
-        const std::string & sKey, 
-        const std::string & sValue, 
-        const uint64_t llVersion, 
+    bool PhxKVSM ::MakeOpValue(
+        const std::string &sKey,
+        const std::string &sValue,
+        const uint64_t llVersion,
         const KVOperatorType iOp,
-        std::string & sPaxosValue)
-{
-    KVOperator oKVOper;
-    oKVOper.set_key(sKey);
-    oKVOper.set_value(sValue);
-    oKVOper.set_version(llVersion);
-    oKVOper.set_operator_(iOp);
-    oKVOper.set_sid(rand());
+        std::string &sPaxosValue)
+    {
+        KVOperator oKVOper;
+        oKVOper.set_key(sKey);
+        oKVOper.set_value(sValue);
+        oKVOper.set_version(llVersion);
+        oKVOper.set_operator_(iOp);
+        oKVOper.set_sid(rand());
 
-    return oKVOper.SerializeToString(&sPaxosValue);
-}
+        return oKVOper.SerializeToString(&sPaxosValue);
+    }
 
-bool PhxKVSM :: MakeGetOpValue(
-        const std::string & sKey,
-        std::string & sPaxosValue)
-{
-    return MakeOpValue(sKey, "", 0, KVOperatorType_READ, sPaxosValue);
-}
+    bool PhxKVSM ::MakeGetOpValue(
+        const std::string &sKey,
+        std::string &sPaxosValue)
+    {
+        return MakeOpValue(sKey, "", 0, KVOperatorType_READ, sPaxosValue);
+    }
 
-bool PhxKVSM :: MakeSetOpValue(
-        const std::string & sKey, 
-        const std::string & sValue, 
-        const uint64_t llVersion, 
-        std::string & sPaxosValue)
-{
-    return MakeOpValue(sKey, sValue, llVersion, KVOperatorType_WRITE, sPaxosValue);
-}
+    bool PhxKVSM ::MakeSetOpValue(
+        const std::string &sKey,
+        const std::string &sValue,
+        const uint64_t llVersion,
+        std::string &sPaxosValue)
+    {
+        return MakeOpValue(sKey, sValue, llVersion, KVOperatorType_WRITE, sPaxosValue);
+    }
 
-bool PhxKVSM :: MakeDelOpValue(
-        const std::string & sKey, 
-        const uint64_t llVersion, 
-        std::string & sPaxosValue)
-{
-    return MakeOpValue(sKey, "", llVersion, KVOperatorType_DELETE, sPaxosValue);
-}
+    bool PhxKVSM ::MakeDelOpValue(
+        const std::string &sKey,
+        const uint64_t llVersion,
+        std::string &sPaxosValue)
+    {
+        return MakeOpValue(sKey, "", llVersion, KVOperatorType_DELETE, sPaxosValue);
+    }
 
-KVClient * PhxKVSM :: GetKVClient()
-{
-    return &m_oKVClient;
-}
+    KVClient *PhxKVSM ::GetKVClient()
+    {
+        return &m_oKVClient;
+    }
 
-}
-
+} // namespace phxkv

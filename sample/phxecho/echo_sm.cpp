@@ -26,26 +26,26 @@ using namespace phxpaxos;
 namespace phxecho
 {
 
-PhxEchoSM :: PhxEchoSM()
-{
-}
-
-bool PhxEchoSM :: Execute(const int iGroupIdx, const uint64_t llInstanceID, 
-        const std::string & sPaxosValue, SMCtx * poSMCtx)
-{
-    printf("[SM Execute] ok, smid %d instanceid %lu value %s\n", 
-            SMID(), llInstanceID, sPaxosValue.c_str());
-
-    //only commiter node have SMCtx.
-    if (poSMCtx != nullptr && poSMCtx->m_pCtx != nullptr)
+    PhxEchoSM ::PhxEchoSM()
     {
-        PhxEchoSMCtx * poPhxEchoSMCtx = (PhxEchoSMCtx *)poSMCtx->m_pCtx;
-        poPhxEchoSMCtx->iExecuteRet = 0;
-        poPhxEchoSMCtx->sEchoRespValue = sPaxosValue;
     }
 
-    return true;
-}
+    bool PhxEchoSM ::Execute(const int iGroupIdx, const uint64_t llInstanceID,
+                             const std::string &sPaxosValue, SMCtx *poSMCtx)
+    {
+        printf("[SM Execute] ok, smid %d instanceid %lu value %s\n",
+               SMID(), llInstanceID, sPaxosValue.c_str());
 
-}
+        //only commiter node have SMCtx.
+        if (poSMCtx != nullptr && poSMCtx->m_pCtx != nullptr)
+        {
+            printf("[SM Execute] run commiter\n");
+            PhxEchoSMCtx *poPhxEchoSMCtx = (PhxEchoSMCtx *)poSMCtx->m_pCtx;
+            poPhxEchoSMCtx->iExecuteRet = 0;
+            poPhxEchoSMCtx->sEchoRespValue = "commit ok\n";
+        }
 
+        return true;
+    }
+
+} // namespace phxecho

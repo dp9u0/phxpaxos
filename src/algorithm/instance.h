@@ -38,115 +38,115 @@ See the AUTHORS file for names of contributors.
 namespace phxpaxos
 {
 
-class Instance
-{
-public:
-    Instance(
-            const Config * poConfig, 
-            const LogStorage * poLogStorage,
-            const MsgTransport * poMsgTransport,
-            const Options & oOptions);
-    ~Instance();
+    class Instance
+    {
+    public:
+        Instance(
+            const Config *poConfig,
+            const LogStorage *poLogStorage,
+            const MsgTransport *poMsgTransport,
+            const Options &oOptions);
+        ~Instance();
 
-    int Init();
+        int Init();
 
-    void Start();
+        void Start();
 
-    void Stop();
+        void Stop();
 
-    int InitLastCheckSum();
+        int InitLastCheckSum();
 
-    const uint64_t GetNowInstanceID();
+        const uint64_t GetNowInstanceID();
 
-    const uint64_t GetMinChosenInstanceID();
+        const uint64_t GetMinChosenInstanceID();
 
-    const uint32_t GetLastChecksum();
+        const uint32_t GetLastChecksum();
 
-    int GetInstanceValue(const uint64_t llInstanceID, std::string & sValue, int & iSMID);
+        int GetInstanceValue(const uint64_t llInstanceID, std::string &sValue, int &iSMID);
 
-public:
-    Committer * GetCommitter();
+    public:
+        Committer *GetCommitter();
 
-    Cleaner * GetCheckpointCleaner();
+        Cleaner *GetCheckpointCleaner();
 
-    Replayer * GetCheckpointReplayer();
+        Replayer *GetCheckpointReplayer();
 
-public:
-    void CheckNewValue();
+    public:
+        void CheckNewValue();
 
-    void OnNewValueCommitTimeout();
+        void OnNewValueCommitTimeout();
 
-public:
-    //this funciton only enqueue, do nothing.
-    int OnReceiveMessage(const char * pcMessage, const int iMessageLen);
+    public:
+        //this funciton only enqueue, do nothing.
+        int OnReceiveMessage(const char *pcMessage, const int iMessageLen);
 
-public:
-    void OnReceive(const std::string & sBuffer);
-    
-    void OnReceiveCheckpointMsg(const CheckpointMsg & oCheckpointMsg);
+    public:
+        void OnReceive(const std::string &sBuffer);
 
-    int OnReceivePaxosMsg(const PaxosMsg & oPaxosMsg, const bool bIsRetry = false);
-    
-    int ReceiveMsgForProposer(const PaxosMsg & oPaxosMsg);
-    
-    int ReceiveMsgForAcceptor(const PaxosMsg & oPaxosMsg, const bool bIsRetry);
-    
-    int ReceiveMsgForLearner(const PaxosMsg & oPaxosMsg);
+        void OnReceiveCheckpointMsg(const CheckpointMsg &oCheckpointMsg);
 
-public:
-    void OnTimeout(const uint32_t iTimerID, const int iType);
+        int OnReceivePaxosMsg(const PaxosMsg &oPaxosMsg, const bool bIsRetry = false);
 
-public:
-    void AddStateMachine(StateMachine * poSM);
+        int ReceiveMsgForProposer(const PaxosMsg &oPaxosMsg);
 
-    bool SMExecute(
-        const uint64_t llInstanceID, 
-        const std::string & sValue, 
-        const bool bIsMyCommit,
-        SMCtx * poSMCtx);
+        int ReceiveMsgForAcceptor(const PaxosMsg &oPaxosMsg, const bool bIsRetry);
 
-private:
-    void ChecksumLogic(const PaxosMsg & oPaxosMsg);
+        int ReceiveMsgForLearner(const PaxosMsg &oPaxosMsg);
 
-    int PlayLog(const uint64_t llBeginInstanceID, const uint64_t llEndInstanceID);
+    public:
+        void OnTimeout(const uint32_t iTimerID, const int iType);
 
-    bool ReceiveMsgHeaderCheck(const Header & oHeader, const nodeid_t iFromNodeID);
+    public:
+        void AddStateMachine(StateMachine *poSM);
 
-    int ProtectionLogic_IsCheckpointInstanceIDCorrect(const uint64_t llCPInstanceID, const uint64_t llLogMaxInstanceID);
+        bool SMExecute(
+            const uint64_t llInstanceID,
+            const std::string &sValue,
+            const bool bIsMyCommit,
+            SMCtx *poSMCtx);
 
-private:
-    void NewInstance();
+    private:
+        void ChecksumLogic(const PaxosMsg &oPaxosMsg);
 
-private:
-    Config * m_poConfig;
-    MsgTransport * m_poMsgTransport;
+        int PlayLog(const uint64_t llBeginInstanceID, const uint64_t llEndInstanceID);
 
-    SMFac m_oSMFac;
+        bool ReceiveMsgHeaderCheck(const Header &oHeader, const nodeid_t iFromNodeID);
 
-    IOLoop m_oIOLoop;
+        int ProtectionLogic_IsCheckpointInstanceIDCorrect(const uint64_t llCPInstanceID, const uint64_t llLogMaxInstanceID);
 
-    Acceptor m_oAcceptor;
-    Learner m_oLearner;
-    Proposer m_oProposer;
+    private:
+        void NewInstance();
 
-    PaxosLog m_oPaxosLog;
+    private:
+        Config *m_poConfig;
+        MsgTransport *m_poMsgTransport;
 
-    uint32_t m_iLastChecksum;
+        SMFac m_oSMFac;
 
-private:
-    CommitCtx m_oCommitCtx;
-    uint32_t m_iCommitTimerID;
+        IOLoop m_oIOLoop;
 
-    Committer m_oCommitter;
+        Acceptor m_oAcceptor;
+        Learner m_oLearner;
+        Proposer m_oProposer;
 
-private:
-    CheckpointMgr m_oCheckpointMgr;
+        PaxosLog m_oPaxosLog;
 
-private:
-    TimeStat m_oTimeStat;
-    Options m_oOptions;
+        uint32_t m_iLastChecksum;
 
-    bool m_bStarted;
-};
-    
-}
+    private:
+        CommitCtx m_oCommitCtx;
+        uint32_t m_iCommitTimerID;
+
+        Committer m_oCommitter;
+
+    private:
+        CheckpointMgr m_oCheckpointMgr;
+
+    private:
+        TimeStat m_oTimeStat;
+        Options m_oOptions;
+
+        bool m_bStarted;
+    };
+
+} // namespace phxpaxos

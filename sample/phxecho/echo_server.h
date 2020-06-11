@@ -30,27 +30,25 @@ See the AUTHORS file for names of contributors.
 namespace phxecho
 {
 
-class PhxEchoServer
-{
-public:
-    PhxEchoServer(const phxpaxos::NodeInfo & oMyNode, const phxpaxos::NodeInfoList & vecNodeList);
-    ~PhxEchoServer();
+    class PhxEchoServer
+    {
+    public:
+        PhxEchoServer(const phxpaxos::NodeInfo &oMyNode, const phxpaxos::NodeInfoList &vecNodeList);
+        ~PhxEchoServer();
 
-    int RunPaxos();
+        int RunPaxos();
 
-    int Echo(const std::string & sEchoReqValue, std::string & sEchoRespValue);
+        int Echo(const std::string &sEchoReqValue, std::string &sEchoRespValue);
 
-private:
-    int MakeLogStoragePath(std::string & sLogStoragePath);
+    private:
+        int MakeLogStoragePath(std::string &sLogStoragePath);
 
-private:
-    phxpaxos::NodeInfo m_oMyNode;
-    phxpaxos::NodeInfoList m_vecNodeList;
+    private:
+        phxpaxos::NodeInfo m_oMyNode;
+        phxpaxos::NodeInfoList m_vecNodeList;
 
-    phxpaxos::Node * m_poPaxosNode;
-    PhxEchoSM m_oEchoSM;
-};
-    
-}
+        phxpaxos::Node *m_poPaxosNode;
+        PhxEchoSM m_oEchoSM;
+    };
 
-
+} // namespace phxecho

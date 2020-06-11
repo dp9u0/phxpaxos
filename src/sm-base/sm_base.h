@@ -28,55 +28,55 @@ See the AUTHORS file for names of contributors.
 namespace phxpaxos
 {
 
-class BatchSMCtx
-{
-public:
-    std::vector<SMCtx *> m_vecSMCtxList;
-};
-    
-class SMFac
-{
-public:
-    SMFac(const int iMyGroupIdx);
-    ~SMFac();
-    
-    bool Execute(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sPaxosValue, SMCtx * poSMCtx);
+    class BatchSMCtx
+    {
+    public:
+        std::vector<SMCtx *> m_vecSMCtxList;
+    };
 
-    bool ExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID, const std::string & sPaxosValue);
+    class SMFac
+    {
+    public:
+        SMFac(const int iMyGroupIdx);
+        ~SMFac();
 
-    void PackPaxosValue(std::string & sPaxosValue, const int iSMID = 0);
+        bool Execute(const int iGroupIdx, const uint64_t llInstanceID,
+                     const std::string &sPaxosValue, SMCtx *poSMCtx);
 
-    void AddSM(StateMachine * poSM);
+        bool ExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID, const std::string &sPaxosValue);
 
-public:
-    void BeforePropose(const int iGroupIdx, std::string & sValue);
+        void PackPaxosValue(std::string &sPaxosValue, const int iSMID = 0);
 
-    void BeforeBatchPropose(const int iGroupIdx, std::string & sValue);
+        void AddSM(StateMachine *poSM);
 
-    void BeforeProposeCall(const int iGroupIdx, const int iSMID, std::string & sValue, bool & change);
+    public:
+        void BeforePropose(const int iGroupIdx, std::string &sValue);
 
-public:
-    const uint64_t GetCheckpointInstanceID(const int iGroupIdx) const;
+        void BeforeBatchPropose(const int iGroupIdx, std::string &sValue);
 
-    std::vector<StateMachine *> GetSMList();
+        void BeforeProposeCall(const int iGroupIdx, const int iSMID, std::string &sValue, bool &change);
 
-private:
-    bool BatchExecute(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sBodyValue, BatchSMCtx * poBatchSMCtx);
+    public:
+        const uint64_t GetCheckpointInstanceID(const int iGroupIdx) const;
 
-    bool DoExecute(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sBodyValue, const int iSMID, SMCtx * poSMCtx);
+        std::vector<StateMachine *> GetSMList();
 
-    bool BatchExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sBodyValue);
+    private:
+        bool BatchExecute(const int iGroupIdx, const uint64_t llInstanceID,
+                          const std::string &sBodyValue, BatchSMCtx *poBatchSMCtx);
 
-    bool DoExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sBodyValue, const int iSMID);
+        bool DoExecute(const int iGroupIdx, const uint64_t llInstanceID,
+                       const std::string &sBodyValue, const int iSMID, SMCtx *poSMCtx);
 
-private:
-    std::vector<StateMachine *> m_vecSMList;
-    int m_iMyGroupIdx;
-};
-    
-}
+        bool BatchExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID,
+                                       const std::string &sBodyValue);
+
+        bool DoExecuteForCheckpoint(const int iGroupIdx, const uint64_t llInstanceID,
+                                    const std::string &sBodyValue, const int iSMID);
+
+    private:
+        std::vector<StateMachine *> m_vecSMList;
+        int m_iMyGroupIdx;
+    };
+
+} // namespace phxpaxos

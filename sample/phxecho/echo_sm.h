@@ -29,27 +29,27 @@ See the AUTHORS file for names of contributors.
 namespace phxecho
 {
 
-class PhxEchoSMCtx
-{
-public:
-    int iExecuteRet;
-    std::string sEchoRespValue;
-
-    PhxEchoSMCtx()
+    class PhxEchoSMCtx
     {
-        iExecuteRet = -1;
-    }
-};
+    public:
+        int iExecuteRet;
+        std::string sEchoRespValue;
 
-class PhxEchoSM : public phxpaxos::StateMachine
-{
-public:
-    PhxEchoSM();
+        PhxEchoSMCtx()
+        {
+            iExecuteRet = -1;
+        }
+    };
 
-    bool Execute(const int iGroupIdx, const uint64_t llInstanceID, 
-            const std::string & sPaxosValue, phxpaxos::SMCtx * poSMCtx);
+    class PhxEchoSM : public phxpaxos::StateMachine
+    {
+    public:
+        PhxEchoSM();
 
-    const int SMID() const { return 1; }
-};
-    
-}
+        bool Execute(const int iGroupIdx, const uint64_t llInstanceID,
+                     const std::string &sPaxosValue, phxpaxos::SMCtx *poSMCtx);
+
+        const int SMID() const { return 1; }
+    };
+
+} // namespace phxecho

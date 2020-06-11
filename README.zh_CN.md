@@ -61,6 +61,7 @@
     100个Group: 150000
 
 # 代码目录介绍
+
 **include**目录包含了使用PhxPaxos所需要用到的所有头文件，您需要理解这些头文件的所有类函数的含义，才能正确的使用PhxPaxos。
 >注：我们对外公共API都放在这个目录的头文件里，调用者切勿引用非此目录的头文件的一些内部API，
 这些API我们有可能会随时的进行调整而不进行兼容。
@@ -128,13 +129,16 @@ make
 make install
 ```
 
-# 如何嵌入PhxPaxos到自己的代码
+## 如何嵌入PhxPaxos到自己的代码
+
 ### 选择一个单机服务
+
 我们选用sample目录里面的PhxEcho来说明PhxPaxos的使用方法。Echo是我们编写RPC服务的常见测试函数，
 我们尝试通过嵌入PhxPaxos的代码，使得我们的Echo可以扩展到多台机器。
 
 假设我们现在已有的EchoServer代码头文件类定义如下：
-```c++
+
+```cpp
 class PhxEchoServer
 {
 public:
@@ -144,10 +148,13 @@ public:
     int Echo(const std::string & sEchoReqValue, std::string & sEchoRespValue);
 };
 ```
+
 接下来我们基于这个类来嵌入PhxPaxos的代码。
 
 ### 实现一个状态机
+
 首先我们定义一个状态机叫PhxEchoSM，这个类继承自StateMachine类，如下：
+
 ```c++
 class PhxEchoSM : public phxpaxos::StateMachine
 {
@@ -160,10 +167,12 @@ public:
     const int SMID() const { return 1; }
 };
 ```
+
 因为一个PhxPaxos可以同时挂载多个状态机，所以需要SMID()这个函数返回这个状态机的唯一标识ID。
 
 其中Execute为状态机状态转移函数，输入为sPaxosValue， PhxPaxos保证多台机器都会执行相同系列的Execute(sPaxosValue)，
 从而获得强一致性。函数的实现如下：
+
 ```c++
 bool PhxEchoSM :: Execute(const int iGroupIdx, const uint64_t llInstanceID, 
         const std::string & sPaxosValue, SMCtx * poSMCtx)
@@ -182,6 +191,7 @@ bool PhxEchoSM :: Execute(const int iGroupIdx, const uint64_t llInstanceID,
     return true;
 }
 ```
+
 我们仅仅print一下这个sPaxosValue，作为多机化的一个验证。
 
 函数的参数出现了一个陌生的类型SMCtx，如下：

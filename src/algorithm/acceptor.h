@@ -29,64 +29,64 @@ See the AUTHORS file for names of contributors.
 namespace phxpaxos
 {
 
-class AcceptorState
-{
-public:
-    AcceptorState(const Config * poConfig, const LogStorage * poLogStorage);
-    ~AcceptorState();
+    class AcceptorState
+    {
+    public:
+        AcceptorState(const Config *poConfig, const LogStorage *poLogStorage);
+        ~AcceptorState();
 
-    void Init();
+        void Init();
 
-    const BallotNumber & GetPromiseBallot() const;
-    void SetPromiseBallot(const BallotNumber & oPromiseBallot);
+        const BallotNumber &GetPromiseBallot() const;
+        void SetPromiseBallot(const BallotNumber &oPromiseBallot);
 
-    const BallotNumber & GetAcceptedBallot() const;
-    void SetAcceptedBallot(const BallotNumber & oAcceptedBallot);
+        const BallotNumber &GetAcceptedBallot() const;
+        void SetAcceptedBallot(const BallotNumber &oAcceptedBallot);
 
-    const std::string & GetAcceptedValue();
-    void SetAcceptedValue(const std::string & sAcceptedValue);
+        const std::string &GetAcceptedValue();
+        void SetAcceptedValue(const std::string &sAcceptedValue);
 
-    const uint32_t GetChecksum() const;
+        const uint32_t GetChecksum() const;
 
-    int Persist(const uint64_t llInstanceID, const uint32_t iLastChecksum);
-    int Load(uint64_t & llInstanceID);
+        int Persist(const uint64_t llInstanceID, const uint32_t iLastChecksum);
+        int Load(uint64_t &llInstanceID);
 
-//private:
-    BallotNumber m_oPromiseBallot;
-    BallotNumber m_oAcceptedBallot;
-    std::string m_sAcceptedValue;
-    uint32_t m_iChecksum;
+        //private:
+        BallotNumber m_oPromiseBallot;
+        BallotNumber m_oAcceptedBallot;
+        std::string m_sAcceptedValue;
+        uint32_t m_iChecksum;
 
-    Config * m_poConfig;
-    PaxosLog m_oPaxosLog;
+        Config *m_poConfig;
+        PaxosLog m_oPaxosLog;
 
-    int m_iSyncTimes;
-};
+        int m_iSyncTimes;
+    };
 
-////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
 
-class Acceptor : public Base
-{
-public:
-    Acceptor(
-            const Config * poConfig, 
-            const MsgTransport * poMsgTransport, 
-            const Instance * poInstance,
-            const LogStorage * poLogStorage);
-    ~Acceptor();
+    class Acceptor : public Base
+    {
+    public:
+        Acceptor(
+            const Config *poConfig,
+            const MsgTransport *poMsgTransport,
+            const Instance *poInstance,
+            const LogStorage *poLogStorage);
+        ~Acceptor();
 
-    virtual void InitForNewPaxosInstance();
+        virtual void InitForNewPaxosInstance();
 
-    int Init();
+        int Init();
 
-    AcceptorState * GetAcceptorState();
+        AcceptorState *GetAcceptorState();
 
-    int OnPrepare(const PaxosMsg & oPaxosMsg);
+        int OnPrepare(const PaxosMsg &oPaxosMsg);
 
-    void OnAccept(const PaxosMsg & oPaxosMsg);
+        void OnAccept(const PaxosMsg &oPaxosMsg);
 
-//private:
-    AcceptorState m_oAcceptorState;
-};
-    
-}
+        //private:
+        AcceptorState m_oAcceptorState;
+    };
+
+} // namespace phxpaxos
